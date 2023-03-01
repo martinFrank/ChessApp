@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/nav_graph"
+            app:startDestination="@id/StartFragment">
+
+    <fragment
+            android:id="@+id/StartFragment"
+            android:name="com.github.martinfrank.chessapp.StartFragment"
+            android:label="@string/first_fragment_label"
+            tools:layout="@layout/fragment_start">
+
+        <action
+                android:id="@+id/action_StartFragment_to_ChessBoardFragment"
+                app:destination="@id/ChessBoardFragment"/>
+        <argument
+                android:name="serverAdress"
+                app:argType="string"
+                android:defaultValue="xxx"/>
+    </fragment>
+    <fragment
+            android:id="@+id/ChessBoardFragment"
+            android:name="com.github.martinfrank.chessapp.ChessBoardFragment"
+            android:label="@string/second_fragment_label"
+            tools:layout="@layout/fragment_chess_board">
+
+        <action
+                android:id="@+id/action_ChessBoardFragment_to_StartFragment"
+                app:destination="@id/StartFragment"/>
+    </fragment>
+</navigation>
