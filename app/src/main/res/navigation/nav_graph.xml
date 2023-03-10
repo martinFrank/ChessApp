@@ -8,7 +8,7 @@
     <fragment
             android:id="@+id/StartFragment"
             android:name="com.github.martinfrank.chessapp.StartFragment"
-            android:label="@string/first_fragment_label"
+            android:label="@string/start_fragment_label"
             tools:layout="@layout/fragment_start">
 
         <action

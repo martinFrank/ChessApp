@@ -1,24 +1,21 @@
 package com.github.martinfrank.chessapp;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import com.github.martinfrank.chessapp.databinding.ActivityMainBinding;
-import com.github.martinfrank.games.chessmodel.message.FcLoginMessage;
-import com.github.martinfrank.games.chessmodel.message.Message;
-import com.github.martinfrank.games.chessmodel.message.MessageParser;
-import com.github.martinfrank.games.chessmodel.model.ModelParser;
 import com.github.martinfrank.games.chessmodel.model.Player;
-import com.github.martinfrank.tcpclientserver.ClientMessageReceiver;
-import com.github.martinfrank.tcpclientserver.TcpClient;
 
 import java.util.UUID;
 
@@ -27,22 +24,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String LOG_TAG = "com.github.martinfrank.chessapp.MainActivity";
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
-
     public static final String SHARED_PREF_FILE_KEY = "com.github.martinfrank.chessapp.shared.pref";
     public static final String SHARED_PREF_PLAYER_ID = "com.github.martinfrank.chessapp.shared.pref.player.id";
     public static final String SHARED_PREF_PLAYER_NAME = "com.github.martinfrank.chessapp.shared.pref.player.name";
+    public static final String SHARED_PREF_PLAYER_COLOR = "com.github.martinfrank.chessapp.shared.pref.player.color";
     public static final String BUNDLE_GAME_JSON = "com.github.martinfrank.chessapp.bundle.gameJson";
-    private static final int LOGIN_DELAY_IN_MILLIS = 500;
-    private static final String CHESS_SERVER_ADRESS = "elitegames.chickenkiller.com";
-    private static final int CHESS_SERVER_PORT = 8100;
 
-    public TcpClient tcpClient;
-    public MessageParser messageParser;
-
-    public ModelParser modelParser;
-
-    public Player player;
-    private ChessMessageReceiver chessMessageReceiver;
+    private Player player;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,66 +45,22 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
+        String permission = Manifest.permission.INTERNET;
+        int res = checkCallingOrSelfPermission(permission);
+        String grant = res == PackageManager.PERMISSION_GRANTED ? "is granted" : "is not granted";
+        Toast.makeText(this, "Permission "+permission+" "+grant, Toast.LENGTH_LONG).show();
+
+
         player = createPlayer();
-
-        messageParser = new MessageParser();
-        modelParser = new ModelParser();
-
-//        tcpClient = new TcpClient(CHESS_SERVER_ADRESS, CHESS_SERVER_PORT, new ClientMessageReceiver(){
-        tcpClient = new TcpClient("192.168.0.65", CHESS_SERVER_PORT, new ClientMessageReceiver(){
-
-            @Override
-            public void receive(String s) {
-                handleServerMessage(s);
-            }
-
-            @Override
-            public void notifyDisconnect() {
-                Log.d(LOG_TAG, "disconnect!");
-//                if(chessMessageReceiver != null){
-//                    chessMessageReceiver.notifyDisconnect();
-//                }
-//                reStartClient();
-            }
-
-        });
-
-        reStartClient();
-
-    }
-
-    private void reStartClient() {
-        new Thread(() -> tcpClient.start()).start();
-        startLogin();
-    }
-
-    private void startLogin() {
-        FcLoginMessage loginMessage = new FcLoginMessage(player);
-        String json = messageParser.toJson(loginMessage);
-        Log.d(LOG_TAG, "sending json to server: "+json);
-        new Thread(() -> {
-            try {
-                Thread.sleep(LOGIN_DELAY_IN_MILLIS);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            tcpClient.send(json);
-        }).start();
-    }
-
-    private void handleServerMessage(String s) {
-        Log.d(LOG_TAG, "receive: "+s);
-        Message message = messageParser.fromJson(s);
-        if(chessMessageReceiver != null){
-            chessMessageReceiver.receive(message);
-        }
+        Log.d(LOG_TAG, "player #1: "+player);
     }
 
     private Player createPlayer() {
         SharedPreferences sharedPref = getSharedPreferences(SHARED_PREF_FILE_KEY, Context.MODE_PRIVATE);
         String idString = sharedPref.getString(SHARED_PREF_PLAYER_ID, UUID.randomUUID().toString());
         String name = sharedPref.getString(SHARED_PREF_PLAYER_NAME, "Player");
-        return new Player(UUID.fromString(idString), name);
+        int color = sharedPref.getInt(SHARED_PREF_PLAYER_COLOR, 0xFF00FF);
+        return new Player(UUID.fromString(idString), name, color);
     }
 
 
@@ -148,13 +92,8 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, appBarConfiguration) || super.onSupportNavigateUp();
     }
 
-    public void sendMessage(Message message) {
-        String json = messageParser.toJson(message);
-        Log.d(LOG_TAG, "sending json to server: "+json);
-        new Thread(() -> tcpClient.send(json)).start();
+    public Player getPlayer() {
+        return player;
     }
 
-    public void setChessMessageReceiver(ChessMessageReceiver chessMessageReceiver){
-        this.chessMessageReceiver = chessMessageReceiver;
-    }
 }

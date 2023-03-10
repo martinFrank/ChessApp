@@ -5,17 +5,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.github.martinfrank.chessapp.databinding.FragmentStartBinding;
-import com.github.martinfrank.games.chessmodel.message.FcGetOpenGamesMessage;
-import com.github.martinfrank.games.chessmodel.message.FsSubmitOpenGamesMessage;
 import com.github.martinfrank.games.chessmodel.message.Message;
+import com.github.martinfrank.games.chessmodel.message.getopengames.FcGetOpenGamesMessage;
+import com.github.martinfrank.games.chessmodel.message.getopengames.FsSubmitOpenGamesMessage;
 import com.github.martinfrank.games.chessmodel.model.Game;
+import com.github.martinfrank.games.chessmodel.model.ModelParser;
 import com.github.martinfrank.games.chessmodel.model.Player;
 
 import java.util.List;
@@ -25,16 +25,20 @@ public class StartFragment extends Fragment implements ChessMessageReceiver {
     private static final String LOG_TAG = "StartFragment";
     private FragmentStartBinding binding;
     private ChessServerAdapter adapter;
+    private ChessClient client;
+    private ModelParser modelParser;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentStartBinding.inflate(inflater, container, false);
-        mainActivity().setChessMessageReceiver(this);
         return binding.getRoot();
     }
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        modelParser = new ModelParser();
+
 
         binding.buttonCreateServer.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -50,16 +54,27 @@ public class StartFragment extends Fragment implements ChessMessageReceiver {
 
         RecyclerView chessServerView = binding.chessServers;
 
-//        games = new Games();
-        // Create adapter passing in the sample user data
-//        adapter = new ChessServerAdapter(games, this);
-                adapter = new ChessServerAdapter( this);
-        // Attach the adapter to the recyclerview to populate items
+        adapter = new ChessServerAdapter(this);
         chessServerView.setAdapter(adapter);
-        // Set layout manager to position the items
         chessServerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(LOG_TAG, "onResume");
+        client = new ChessClient(getPlayer(), this);
+        client.start();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d(LOG_TAG, "onPause");
+        client.stop();
+
+    }
 
     @Override
     public void onDestroyView() {
@@ -75,11 +90,11 @@ public class StartFragment extends Fragment implements ChessMessageReceiver {
 
 
     //called from ChessServerAdapter
-    public void connect(Game game) {
+    public void connectToGame(Game game) {
         Log.d(LOG_TAG, "connect to " + game);
 
         Bundle bundle = new Bundle();
-        String gameString = mainActivity().modelParser.gameToJson(game);
+        String gameString = modelParser.gameToJson(game);
 
         bundle.putString(MainActivity.BUNDLE_GAME_JSON, gameString);
         NavHostFragment.findNavController(StartFragment.this)
@@ -99,24 +114,27 @@ public class StartFragment extends Fragment implements ChessMessageReceiver {
     private void handleGetOpenGames(FsSubmitOpenGamesMessage message) {
         List<Game> games = message.games;
         getActivity().runOnUiThread(() -> {
+            Log.d(LOG_TAG,"runOnUiStarted");
             int size = games.size();
             adapter.setItems(games, getPlayer());
             adapter.notifyItemRangeRemoved(0, size);
             adapter.notifyItemRangeInserted(0, games.size());
+            Log.d(LOG_TAG,"runOnUiFinished");
         });
     }
 
 
     private void sendMessage(Message m) {
-        Log.d(LOG_TAG, "sendMessage:"+m);
-        mainActivity().sendMessage(m);
+        Log.d(LOG_TAG, "sendMessage:" + m);
+        client.sendMessage(m);
     }
 
     private Player getPlayer() {
-        return mainActivity().player;
+        return ((MainActivity) getActivity()).getPlayer();
     }
 
-    private MainActivity mainActivity() {
-        return ((MainActivity) getActivity());
+
+    public void deleteGame(Game chessGame) {
+        //TODO
     }
 }

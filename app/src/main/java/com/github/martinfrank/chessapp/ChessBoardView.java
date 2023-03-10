@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import androidx.annotation.Nullable;
 import com.github.martinfrank.games.chessmodel.model.GameContent;
@@ -16,6 +17,8 @@ import com.github.martinfrank.games.chessmodel.model.chess.Figure;
 import java.util.Map;
 
 public class ChessBoardView extends View {
+
+    private static final String LOG_TAG = "ChessBoardView";
 
     private int viewSizeInPixels;
     private final Paint blackBack = new Paint();
@@ -126,5 +129,15 @@ public class ChessBoardView extends View {
 
     private void setFigure(Field field, Figure figure) {
 
+    }
+
+    public Field getFieldAt(float x, float y) {
+        double rasterSize = viewSizeInPixels/8f;
+        int xInt = (int)(x / rasterSize);
+        int yInt = (int)(y / rasterSize);
+        Log.d(LOG_TAG, "mapping touch: "+x+"/"+y+" to field at: "+xInt+"/"+yInt);
+        String column = Field.mapToColumn(xInt);
+        String row = Field.mapToRow(yInt);
+        return new Field(row, column);
     }
 }

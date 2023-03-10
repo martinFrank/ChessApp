@@ -29,13 +29,20 @@
             android:id="@+id/text_game_name"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="10"/>
+            android:layout_weight="6"/>
 
     <Button
-            android:text="@string/connect"
+            android:text="@string/join_game"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:id="@+id/button_join_game"
+            android:layout_weight="4"/>
+
+    <Button
+            android:text="@string/delete_game"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/button_delete_game"
             android:layout_weight="4"/>
 
 </LinearLayout>
