@@ -17,7 +17,10 @@ import com.github.martinfrank.games.chessmodel.message.getgamecontent.FcGetGameC
 import com.github.martinfrank.games.chessmodel.message.getgamecontent.FsSubmitGameContentMessage;
 import com.github.martinfrank.games.chessmodel.message.joingame.FcJoinGameMessage;
 import com.github.martinfrank.games.chessmodel.message.joingame.FsConfirmJoinGamesMessage;
-import com.github.martinfrank.games.chessmodel.message.selectColor.FsSubmitSelectColorMessage;
+import com.github.martinfrank.games.chessmodel.message.movefigure.FcMoveFigureMessage;
+import com.github.martinfrank.games.chessmodel.message.movefigure.FsSubmitMoveFigureMessage;
+import com.github.martinfrank.games.chessmodel.message.selectcolor.FsSubmitSelectColorMessage;
+import com.github.martinfrank.games.chessmodel.message.selectfield.FcSelectFieldMessage;
 import com.github.martinfrank.games.chessmodel.message.selectfield.FsSubmitSelectFieldMessage;
 import com.github.martinfrank.games.chessmodel.model.Game;
 import com.github.martinfrank.games.chessmodel.model.GameContent;
@@ -25,6 +28,7 @@ import com.github.martinfrank.games.chessmodel.model.ModelParser;
 import com.github.martinfrank.games.chessmodel.model.Player;
 import com.github.martinfrank.games.chessmodel.model.chess.Color;
 import com.github.martinfrank.games.chessmodel.model.chess.Field;
+import com.github.martinfrank.games.chessmodel.model.chess.Figure;
 
 public class ChessBoardFragment extends Fragment implements ChessMessageReceiver {
 
@@ -34,6 +38,7 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
 
     private ChessClient client;
     private ModelParser modelParser;
+    private Field previousSelection;
 
 
     @Override
@@ -61,7 +66,7 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 ChessBoardView chessBoardView = (ChessBoardView) view;
                 Field f = chessBoardView.getFieldAt(motionEvent.getX(), motionEvent.getY());
-                Log.d(LOG_TAG, "touched field: "+f);
+                Log.d(LOG_TAG, "touched field: " + f);
                 selectField(f);
                 return false;
             }
@@ -77,12 +82,20 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
             }
         }
 
-
     }
 
     private void selectField(Field f) {
-//        new FcSelectFigureMessage();
-//        client.sendMessage(new FcJoinGameMessage(getPlayer(), game.gameId));
+        boolean isValidMove = game.gameContent.isValidMove(previousSelection, f, getPlayer());
+        if (isValidMove) {
+            Log.d(LOG_TAG, "i could move :-)");
+            //FIXME confirm move
+            FcMoveFigureMessage moveFigureMessage = new FcMoveFigureMessage(getPlayer(), game.gameId, previousSelection, f);
+            client.sendMessage(moveFigureMessage);
+        }else{
+            FcSelectFieldMessage fieldMessage = new FcSelectFieldMessage(getPlayer(), game.gameId, f);
+            client.sendMessage(fieldMessage);
+        }
+        previousSelection = f;
     }
 
 
@@ -118,12 +131,11 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
             case FS_CONFIRM_JOIN_GAME: {
                 FsConfirmJoinGamesMessage joinGamesMessage = (FsConfirmJoinGamesMessage) message;
                 updateGame(joinGamesMessage.game);
-
                 break;
             }
             case FS_SUBMIT_GAME_CONTENT: {
-//                FsSubmitGameContentMessage submitGameContentMessage = (FsSubmitGameContentMessage) message;
-//                updateGame(submitGameContentMessage.content);
+                FsSubmitGameContentMessage submitGameContentMessage = (FsSubmitGameContentMessage) message;
+                updateGame(submitGameContentMessage.game);
                 break;
             }
             case FS_SUBMIT_SELECT_COLOR: {
@@ -136,11 +148,17 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
                 updateGame(selectColorMessage.game);
                 break;
             }
+            case FS_SUBMIT_MOVE_FIGURE:{
+                FsSubmitMoveFigureMessage selectColorMessage = (FsSubmitMoveFigureMessage) message;
+                updateGame(selectColorMessage.game);
+                break;
+            }
         }
     }
 
     private void updateGame(Game game) {
         this.game = game;
+        this.game.gameContent.setContainer(game);
         updateGui();
     }
 
@@ -149,9 +167,9 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
         Log.d(LOG_TAG, "update Board GUI");
         binding.chessBoard.updateBoard(game);
         binding.chessBoard.invalidate();
-        Log.d(LOG_TAG, "game = "+game);
-        Log.d(LOG_TAG, "game.gameContent = "+game.gameContent);
-        Log.d(LOG_TAG, "game.gameContent.getHostColor() = "+game.gameContent.getHostColor());
+        Log.d(LOG_TAG, "game = " + game);
+        Log.d(LOG_TAG, "game.gameContent = " + game.gameContent);
+        Log.d(LOG_TAG, "game.gameContent.getHostColor() = " + game.gameContent.getHostColor());
         if (game.gameContent.getHostColor() == Color.BLACK) {
             binding.textBlackPlayerName.setText(PrettyFormat.playerName(game.hostPlayer));
             binding.textWhitePlayerName.setText(PrettyFormat.playerName(game.getGuestPlayer()));
@@ -160,7 +178,7 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
             binding.textWhitePlayerName.setText(PrettyFormat.playerName(game.hostPlayer));
             binding.textBlackPlayerName.setText(PrettyFormat.playerName(game.getGuestPlayer()));
         }
-        Log.d(LOG_TAG, "game.gameContent.getCurrentPlayer() = "+game.gameContent.getCurrentPlayer());
+        Log.d(LOG_TAG, "game.gameContent.getCurrentPlayer() = " + game.gameContent.getCurrentPlayer());
         binding.textCurrentPlayerName.setText(PrettyFormat.playerName(game.gameContent.getCurrentPlayer()));
     }
 

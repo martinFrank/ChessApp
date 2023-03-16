@@ -2,6 +2,7 @@ package com.github.martinfrank.chessapp;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
@@ -16,6 +17,7 @@ import com.github.martinfrank.games.chessmodel.model.chess.Color;
 import com.github.martinfrank.games.chessmodel.model.chess.Field;
 import com.github.martinfrank.games.chessmodel.model.chess.Figure;
 
+import java.util.List;
 import java.util.Map;
 
 public class ChessBoardView extends View {
@@ -99,13 +101,38 @@ public class ChessBoardView extends View {
 
     private void drawSelection(Canvas canvas, double squareSize) {
         Field hostSelection = game.gameContent.getHostSelection();
+        Field guestSelection = game.gameContent.getGuestSelection();
+
+        if (guestSelection != null && guestSelection.equals(hostSelection)){
+            hostColor.setPathEffect(new DashPathEffect(new float[]{10, 10}, 0));
+            guestColor.setPathEffect(new DashPathEffect(new float[]{10, 10}, 10));
+        }else{
+            hostColor.setPathEffect(null);
+            guestColor.setPathEffect(null);
+        }
         if(hostSelection != null){
-            int x0 = (int)(Field.mapFromColumn(hostSelection.column) * squareSize);
-            int y0 = (int)(Field.mapFromRow(hostSelection.row) * squareSize);
-            int x1 = (int)((Field.mapFromColumn(hostSelection.column)+1) * squareSize);
-            int y1 = (int)((Field.mapFromRow(hostSelection.row)+1) * squareSize);
-            Rect field = new Rect(x0,y0,x1,y1);
-            canvas.drawRect(field, hostColor);
+            List<Field> fields = game.gameContent.board.getSelectionForField(hostSelection);
+            fields.add(hostSelection);
+            for(Field selectionPath: fields) {
+                int x0 = (int) (Field.mapFromColumn(selectionPath.column) * squareSize);
+                int y0 = (int) (Field.mapFromRow(selectionPath.row) * squareSize);
+                int x1 = (int) ((Field.mapFromColumn(selectionPath.column) + 1) * squareSize);
+                int y1 = (int) ((Field.mapFromRow(selectionPath.row) + 1) * squareSize);
+                Rect field = new Rect(x0, y0, x1, y1);
+                canvas.drawRect(field, hostColor);
+            }
+        }
+        if(guestSelection != null){
+            List<Field> fields = game.gameContent.board.getSelectionForField(guestSelection);
+            fields.add(guestSelection);
+            for(Field selectionPath: fields) {
+                int x0 = (int) (Field.mapFromColumn(selectionPath.column) * squareSize);
+                int y0 = (int) (Field.mapFromRow(selectionPath.row) * squareSize);
+                int x1 = (int) ((Field.mapFromColumn(selectionPath.column) + 1) * squareSize);
+                int y1 = (int) ((Field.mapFromRow(selectionPath.row) + 1) * squareSize);
+                Rect field = new Rect(x0, y0, x1, y1);
+                canvas.drawRect(field, guestColor);
+            }
         }
 
     }
@@ -150,13 +177,16 @@ public class ChessBoardView extends View {
         int hr = (game.hostPlayer.color & 0xFF0000 ) >> 16;
         int hg = (game.hostPlayer.color & 0x00FF00) >> 8;
         int hb = game.hostPlayer.color & 0x0000FF;
-        hostColor.setARGB(0xff, 0,0xFF,0);
+        hostColor.setARGB(0xff, hr,hg,hb);
+        hostColor.setStrokeWidth(9f);
         if(game.getGuestPlayer() != null){
             int gr = (game.getGuestPlayer().color & 0xFF0000 ) >> 16;
             int gg = (game.getGuestPlayer().color & 0x00FF00) >> 8;
             int gb = game.getGuestPlayer().color & 0x0000FF;
             guestColor.setARGB(0xff, gr,gg,gb);
+            guestColor.setStrokeWidth(9f);
         }
+
     }
 
 
