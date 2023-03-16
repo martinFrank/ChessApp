@@ -18,6 +18,7 @@ import com.github.martinfrank.games.chessmodel.message.getgamecontent.FsSubmitGa
 import com.github.martinfrank.games.chessmodel.message.joingame.FcJoinGameMessage;
 import com.github.martinfrank.games.chessmodel.message.joingame.FsConfirmJoinGamesMessage;
 import com.github.martinfrank.games.chessmodel.message.selectColor.FsSubmitSelectColorMessage;
+import com.github.martinfrank.games.chessmodel.message.selectfield.FsSubmitSelectFieldMessage;
 import com.github.martinfrank.games.chessmodel.model.Game;
 import com.github.martinfrank.games.chessmodel.model.GameContent;
 import com.github.martinfrank.games.chessmodel.model.ModelParser;
@@ -110,38 +111,43 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
             }
             case FS_SUBMIT_CREATED_GAME: {
                 FsSubmitCreatedGameMessage createdGameMessage = (FsSubmitCreatedGameMessage) message;
-                this.game = createdGameMessage.game;
-                client.sendMessage(new FcGetGameContentMessage(getPlayer(), game));
+                updateGame(createdGameMessage.game);
+//                client.sendMessage(new FcGetGameContentMessage(getPlayer(), game));
                 break;
             }
             case FS_CONFIRM_JOIN_GAME: {
-                FsConfirmJoinGamesMessage createdGameMessage = (FsConfirmJoinGamesMessage) message;
-                this.game = createdGameMessage.game;
-                client.sendMessage(new FcGetGameContentMessage(getPlayer(), game));
+                FsConfirmJoinGamesMessage joinGamesMessage = (FsConfirmJoinGamesMessage) message;
+                updateGame(joinGamesMessage.game);
+
                 break;
             }
             case FS_SUBMIT_GAME_CONTENT: {
-                FsSubmitGameContentMessage submitGameContentMessage = (FsSubmitGameContentMessage) message;
-                updateBoardContent(submitGameContentMessage.content);
+//                FsSubmitGameContentMessage submitGameContentMessage = (FsSubmitGameContentMessage) message;
+//                updateGame(submitGameContentMessage.content);
                 break;
             }
             case FS_SUBMIT_SELECT_COLOR: {
-//                FsSubmitSelectColorMessage selectColorMessage = (FsSubmitSelectColorMessage) message;
-//                game.gameContent = selectColorMessage.;
-//                updateBoardContent(submitGameContentMessage.content);
+                FsSubmitSelectColorMessage selectColorMessage = (FsSubmitSelectColorMessage) message;
+                updateGame(selectColorMessage.game);
+                break;
             }
-
+            case FS_SUBMIT_SELECT_FIELD: {
+                FsSubmitSelectFieldMessage selectColorMessage = (FsSubmitSelectFieldMessage) message;
+                updateGame(selectColorMessage.game);
+                break;
+            }
         }
     }
 
-    private void updateBoardContent(GameContent content) {
-        game.gameContent = content;
+    private void updateGame(Game game) {
+        this.game = game;
         updateGui();
     }
 
+
     private void updateGui() {
         Log.d(LOG_TAG, "update Board GUI");
-        binding.chessBoard.updateBoard(game.gameContent);
+        binding.chessBoard.updateBoard(game);
         binding.chessBoard.invalidate();
         Log.d(LOG_TAG, "game = "+game);
         Log.d(LOG_TAG, "game.gameContent = "+game.gameContent);

@@ -8,6 +8,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import androidx.annotation.Nullable;
+import ch.qos.logback.core.util.SystemInfo;
+import com.github.martinfrank.games.chessmodel.model.Game;
 import com.github.martinfrank.games.chessmodel.model.GameContent;
 import com.github.martinfrank.games.chessmodel.model.chess.Board;
 import com.github.martinfrank.games.chessmodel.model.chess.Color;
@@ -25,7 +27,9 @@ public class ChessBoardView extends View {
     private final Paint whiteBack = new Paint();
     private final Paint blackFigure = new Paint();
     private final Paint whiteFigure = new Paint();
-    private Board board;
+    private final Paint hostColor  = new Paint();
+    private final Paint guestColor = new Paint();
+    private Game game;
 
     public ChessBoardView(Context context) {
         super(context);
@@ -57,6 +61,9 @@ public class ChessBoardView extends View {
         blackFigure.setStyle(Paint.Style.FILL);
         whiteFigure.setARGB(0xff, 0xFF,0xFF,0xFF);
         whiteFigure.setStyle(Paint.Style.FILL);
+
+        hostColor.setStyle(Paint.Style.STROKE);
+        guestColor.setStyle(Paint.Style.STROKE);
     }
 
 
@@ -85,6 +92,22 @@ public class ChessBoardView extends View {
                 drawField(dx, dy, squareSize, canvas);
             }
         }
+        if(hasBoard()){
+            drawSelection(canvas, squareSize);
+        }
+    }
+
+    private void drawSelection(Canvas canvas, double squareSize) {
+        Field hostSelection = game.gameContent.getHostSelection();
+        if(hostSelection != null){
+            int x0 = (int)(Field.mapFromColumn(hostSelection.column) * squareSize);
+            int y0 = (int)(Field.mapFromRow(hostSelection.row) * squareSize);
+            int x1 = (int)((Field.mapFromColumn(hostSelection.column)+1) * squareSize);
+            int y1 = (int)((Field.mapFromRow(hostSelection.row)+1) * squareSize);
+            Rect field = new Rect(x0,y0,x1,y1);
+            canvas.drawRect(field, hostColor);
+        }
+
     }
 
     private void drawField(int dx, int dy, float squareSize, Canvas canvas) {
@@ -95,7 +118,7 @@ public class ChessBoardView extends View {
     }
 
     private void drawFigure(int dx, int dy, float squareSize, Canvas canvas) {
-        if (board != null) {
+        if (hasBoard()) {
             Figure figure = findFigureAt(dx, dy);
             if (figure != null) {
                 Paint color = figure.color == Color.WHITE ? whiteFigure : blackFigure;
@@ -104,11 +127,15 @@ public class ChessBoardView extends View {
         }
     }
 
+    private boolean hasBoard() {
+        return game != null && game.gameContent != null && game.gameContent.board != null;
+    }
+
     private Figure findFigureAt(int dx, int dy) {
         String column = Field.mapToColumn(dx);
         String row = Field.mapToRow(dy);
 
-        for (Map.Entry<Field, Figure> entry : board.lineUp.entrySet()) { //NPE already checked
+        for (Map.Entry<Field, Figure> entry : game.gameContent.board.lineUp.entrySet()) { //NPE already checked
             Field field = entry.getKey();
             if (field.row.equals(row) && field.column.equals(column)) {
                 return entry.getValue();
@@ -118,14 +145,20 @@ public class ChessBoardView extends View {
     }
 
 
-    public void updateBoard(GameContent gameContent) {
-        this.board = gameContent.board;
-//        for (Map.Entry<Field, Figure> entry : gameContent.board.lineUp.entrySet()) {
-//            Field field = entry.getKey();
-//            Figure figure = entry.getValue();
-//            setFigure(field, figure);
-//        }
+    public void updateBoard(Game game) {
+        this.game = game;
+        int hr = (game.hostPlayer.color & 0xFF0000 ) >> 16;
+        int hg = (game.hostPlayer.color & 0x00FF00) >> 8;
+        int hb = game.hostPlayer.color & 0x0000FF;
+        hostColor.setARGB(0xff, 0,0xFF,0);
+        if(game.getGuestPlayer() != null){
+            int gr = (game.getGuestPlayer().color & 0xFF0000 ) >> 16;
+            int gg = (game.getGuestPlayer().color & 0x00FF00) >> 8;
+            int gb = game.getGuestPlayer().color & 0x0000FF;
+            guestColor.setARGB(0xff, gr,gg,gb);
+        }
     }
+
 
     private void setFigure(Field field, Figure figure) {
 

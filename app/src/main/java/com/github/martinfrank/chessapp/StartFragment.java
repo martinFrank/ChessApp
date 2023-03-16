@@ -108,6 +108,7 @@ public class StartFragment extends Fragment implements ChessMessageReceiver {
                 handleGetOpenGames((FsSubmitOpenGamesMessage) message);
                 return;
             }
+
         }
     }
 
