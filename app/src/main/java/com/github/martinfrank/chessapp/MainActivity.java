@@ -45,14 +45,22 @@ public class MainActivity extends AppCompatActivity {
         appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph()).build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
-        String permission = Manifest.permission.INTERNET;
-        int res = checkCallingOrSelfPermission(permission);
-        String grant = res == PackageManager.PERMISSION_GRANTED ? "is granted" : "is not granted";
-        Toast.makeText(this, "Permission "+permission+" "+grant, Toast.LENGTH_LONG).show();
-
-
         player = createPlayer();
+        savePlayer();
         Log.d(LOG_TAG, "player #1: "+player);
+    }
+
+    private void savePlayer() {
+        SharedPreferences sharedPref = getSharedPreferences(SHARED_PREF_FILE_KEY, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+
+        String playerName = player.playerName;
+        int color = player.color;
+        String id = player.playerId.toString();
+        editor.putString(MainActivity.SHARED_PREF_PLAYER_NAME, playerName);
+        editor.putInt(MainActivity.SHARED_PREF_PLAYER_COLOR, color);
+        editor.putString(MainActivity.SHARED_PREF_PLAYER_ID, id);
+        editor.apply();
     }
 
     private Player createPlayer() {

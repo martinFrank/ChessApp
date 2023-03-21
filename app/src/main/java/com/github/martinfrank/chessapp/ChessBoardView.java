@@ -16,6 +16,7 @@ import com.github.martinfrank.games.chessmodel.model.chess.Board;
 import com.github.martinfrank.games.chessmodel.model.chess.Color;
 import com.github.martinfrank.games.chessmodel.model.chess.Field;
 import com.github.martinfrank.games.chessmodel.model.chess.Figure;
+import com.github.martinfrank.games.chessmodel.model.chess.Participant;
 
 import java.util.List;
 import java.util.Map;
@@ -100,8 +101,8 @@ public class ChessBoardView extends View {
     }
 
     private void drawSelection(Canvas canvas, double squareSize) {
-        Field hostSelection = game.gameContent.getHostSelection();
-        Field guestSelection = game.gameContent.getGuestSelection();
+        Field hostSelection = getSelection(game.gameContent.getHost());
+        Field guestSelection = getSelection(game.gameContent.getGuest());
 
         if (guestSelection != null && guestSelection.equals(hostSelection)){
             hostColor.setPathEffect(new DashPathEffect(new float[]{10, 10}, 0));
@@ -135,6 +136,10 @@ public class ChessBoardView extends View {
             }
         }
 
+    }
+
+    private Field getSelection(Participant p) {
+        return p == null ? null: p.getSelection();
     }
 
     private void drawField(int dx, int dy, float squareSize, Canvas canvas) {
@@ -189,10 +194,6 @@ public class ChessBoardView extends View {
 
     }
 
-
-    private void setFigure(Field field, Figure figure) {
-
-    }
 
     public Field getFieldAt(float x, float y) {
         double rasterSize = viewSizeInPixels/8f;

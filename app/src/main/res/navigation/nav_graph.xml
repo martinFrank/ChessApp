@@ -18,6 +18,9 @@
                 android:name="serverAdress"
                 app:argType="string"
                 android:defaultValue="xxx"/>
+        <action
+                android:id="@+id/action_StartFragment_to_SettingsFragment"
+                app:destination="@id/SettingsFragment"/>
     </fragment>
     <fragment
             android:id="@+id/ChessBoardFragment"
@@ -27,6 +30,15 @@
 
         <action
                 android:id="@+id/action_ChessBoardFragment_to_StartFragment"
+                app:destination="@id/StartFragment"/>
+    </fragment>
+    <fragment
+            android:id="@+id/SettingsFragment"
+            android:name="com.github.martinfrank.chessapp.SettingsFragment"
+            android:label="fragment_settings"
+            tools:layout="@layout/fragment_settings">
+        <action
+                android:id="@+id/action_SettingsFragment_to_StartFragment"
                 app:destination="@id/StartFragment"/>
     </fragment>
 </navigation>

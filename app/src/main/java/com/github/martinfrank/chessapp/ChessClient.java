@@ -28,11 +28,13 @@ public class ChessClient {
         this.player = player;
         messageParser = new MessageParser();
 
-//                tcpClient = new TcpClient(CHESS_SERVER_ADDRESS, CHESS_SERVER_PORT, new ClientMessageReceiver(){
-        tcpClient = new TcpClient( "192.168.0.65", CHESS_SERVER_PORT, new ClientMessageReceiver(){
+//        tcpClient = new TcpClient(CHESS_SERVER_ADDRESS, CHESS_SERVER_PORT, new ClientMessageReceiver() {
+//        tcpClient = new TcpClient( "192.168.0.65", CHESS_SERVER_PORT, new ClientMessageReceiver(){
 //        tcpClient = new TcpClient( "192.168.0.60", CHESS_SERVER_PORT, new ClientMessageReceiver(){
 //        tcpClient = new TcpClient( "192.168.56.1", CHESS_SERVER_PORT, new ClientMessageReceiver(){
 //        tcpClient = new TcpClient("192.168.61.104", CHESS_SERVER_PORT, new ClientMessageReceiver() {
+        tcpClient = new TcpClient("192.168.61.221", CHESS_SERVER_PORT, new ClientMessageReceiver() {
+
 
             @Override
             public void receive(String s) {
@@ -49,7 +51,6 @@ public class ChessClient {
         });
 
     }
-
 
 
     void reConnectClient() {

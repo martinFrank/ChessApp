@@ -1,11 +1,13 @@
 package com.github.martinfrank.chessapp;
 
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
@@ -19,9 +21,12 @@ import com.github.martinfrank.games.chessmodel.message.joingame.FcJoinGameMessag
 import com.github.martinfrank.games.chessmodel.message.joingame.FsConfirmJoinGamesMessage;
 import com.github.martinfrank.games.chessmodel.message.movefigure.FcMoveFigureMessage;
 import com.github.martinfrank.games.chessmodel.message.movefigure.FsSubmitMoveFigureMessage;
+import com.github.martinfrank.games.chessmodel.message.selectcolor.FcSelectColorMessage;
 import com.github.martinfrank.games.chessmodel.message.selectcolor.FsSubmitSelectColorMessage;
 import com.github.martinfrank.games.chessmodel.message.selectfield.FcSelectFieldMessage;
 import com.github.martinfrank.games.chessmodel.message.selectfield.FsSubmitSelectFieldMessage;
+import com.github.martinfrank.games.chessmodel.message.startgame.FcStartGameMessage;
+import com.github.martinfrank.games.chessmodel.message.startgame.FsSubmitStartGameMessage;
 import com.github.martinfrank.games.chessmodel.model.Game;
 import com.github.martinfrank.games.chessmodel.model.GameContent;
 import com.github.martinfrank.games.chessmodel.model.ModelParser;
@@ -29,6 +34,8 @@ import com.github.martinfrank.games.chessmodel.model.Player;
 import com.github.martinfrank.games.chessmodel.model.chess.Color;
 import com.github.martinfrank.games.chessmodel.model.chess.Field;
 import com.github.martinfrank.games.chessmodel.model.chess.Figure;
+import com.github.martinfrank.games.chessmodel.model.chess.Figurine;
+import com.github.martinfrank.games.chessmodel.model.chess.Participant;
 
 public class ChessBoardFragment extends Fragment implements ChessMessageReceiver {
 
@@ -53,24 +60,26 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
 
         modelParser = new ModelParser();
 
-        binding.buttonReturn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                NavHostFragment.findNavController(ChessBoardFragment.this)
-                        .navigate(R.id.action_ChessBoardFragment_to_StartFragment);
-            }
+        binding.buttonReturn.setOnClickListener(button -> NavHostFragment.findNavController(ChessBoardFragment.this)
+                .navigate(R.id.action_ChessBoardFragment_to_StartFragment));
+
+        binding.buttonSelectColor.setOnClickListener(view1 -> {
+            Color myColor = game.gameContent.getThisParticipant(getPlayer()).color;
+            client.sendMessage(new FcSelectColorMessage(getPlayer(), game.gameId, myColor.getOpposite()));
         });
 
-        binding.chessBoard.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                ChessBoardView chessBoardView = (ChessBoardView) view;
-                Field f = chessBoardView.getFieldAt(motionEvent.getX(), motionEvent.getY());
-                Log.d(LOG_TAG, "touched field: " + f);
-                selectField(f);
-                return false;
-            }
+        binding.buttonStartGame.setOnClickListener(button -> client.sendMessage(new FcStartGameMessage(getPlayer(), game.gameId)));
+
+        binding.chessBoard.setOnTouchListener((board, motionEvent) -> {
+            ChessBoardView chessBoardView = (ChessBoardView) board;
+            Field f = chessBoardView.getFieldAt(motionEvent.getX(), motionEvent.getY());
+            Log.d(LOG_TAG, "touched field: " + f);
+            selectField(f);
+            return false;
         });
+
+        binding.console.setVerticalScrollBarEnabled(true);
+        binding.console.setMovementMethod(new ScrollingMovementMethod());
 
         Bundle bundle = getArguments();
         if (bundle != null) {
@@ -86,12 +95,13 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
 
     private void selectField(Field f) {
         boolean isValidMove = game.gameContent.isValidMove(previousSelection, f, getPlayer());
-        if (isValidMove) {
+        boolean hasSelection = game.gameContent.getThisParticipant(getPlayer()).hasSelection();
+        if (isValidMove && hasSelection) {
             Log.d(LOG_TAG, "i could move :-)");
             //FIXME confirm move
             FcMoveFigureMessage moveFigureMessage = new FcMoveFigureMessage(getPlayer(), game.gameId, previousSelection, f);
             client.sendMessage(moveFigureMessage);
-        }else{
+        } else {
             FcSelectFieldMessage fieldMessage = new FcSelectFieldMessage(getPlayer(), game.gameId, f);
             client.sendMessage(fieldMessage);
         }
@@ -123,13 +133,22 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
                 break;
             }
             case FS_SUBMIT_CREATED_GAME: {
+                Log.d(LOG_TAG, "FS_SUBMIT_CREATED_GAME");
                 FsSubmitCreatedGameMessage createdGameMessage = (FsSubmitCreatedGameMessage) message;
+                Log.d(LOG_TAG, "createdGameMessage="+createdGameMessage);
                 updateGame(createdGameMessage.game);
-//                client.sendMessage(new FcGetGameContentMessage(getPlayer(), game));
+                Log.d(LOG_TAG, "updateGame");
+                break;
+            }
+            case FS_SUBMIT_START_GAME: {
+                FsSubmitStartGameMessage createdGameMessage = (FsSubmitStartGameMessage) message;
+                addConsole("the game has started!");
+                updateGame(createdGameMessage.game);
                 break;
             }
             case FS_CONFIRM_JOIN_GAME: {
                 FsConfirmJoinGamesMessage joinGamesMessage = (FsConfirmJoinGamesMessage) message;
+                addConsole("player "+joinGamesMessage.player.playerName+" joined");
                 updateGame(joinGamesMessage.game);
                 break;
             }
@@ -140,6 +159,8 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
             }
             case FS_SUBMIT_SELECT_COLOR: {
                 FsSubmitSelectColorMessage selectColorMessage = (FsSubmitSelectColorMessage) message;
+                String color = game.gameContent.getThisParticipant(getPlayer()).color.toString();
+                addConsole("color has changed, your color is now "+color);
                 updateGame(selectColorMessage.game);
                 break;
             }
@@ -148,17 +169,32 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
                 updateGame(selectColorMessage.game);
                 break;
             }
-            case FS_SUBMIT_MOVE_FIGURE:{
-                FsSubmitMoveFigureMessage selectColorMessage = (FsSubmitMoveFigureMessage) message;
-                updateGame(selectColorMessage.game);
+            case FS_SUBMIT_MOVE_FIGURE: {
+                FsSubmitMoveFigureMessage moveFigureMessage = (FsSubmitMoveFigureMessage) message;
+                String from = moveFigureMessage.from.toString();
+                String to = moveFigureMessage.to.toString();
+                Figure f = moveFigureMessage.game.gameContent.board.findFigure(moveFigureMessage.to);
+                String name = moveFigureMessage.player.playerName;
+                addConsole("player "+name+" moved figure "+f.type.name()+" from "+from+" to "+to);
+                updateGame(moveFigureMessage.game);
                 break;
             }
         }
     }
 
+    private void addConsole(String s) {
+        getActivity().runOnUiThread(() -> {
+            Log.d(LOG_TAG,"runOnUiStarted, added text to console: "+s);
+            String addendum = s+"\n";
+            binding.console.getEditableText().insert(0, addendum );
+            binding.console.scrollTo(0,0);
+            Log.d(LOG_TAG,"runOnUiFinished");
+        });
+
+    }
+
     private void updateGame(Game game) {
         this.game = game;
-        this.game.gameContent.setContainer(game);
         updateGui();
     }
 
@@ -167,19 +203,19 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
         Log.d(LOG_TAG, "update Board GUI");
         binding.chessBoard.updateBoard(game);
         binding.chessBoard.invalidate();
-        Log.d(LOG_TAG, "game = " + game);
-        Log.d(LOG_TAG, "game.gameContent = " + game.gameContent);
-        Log.d(LOG_TAG, "game.gameContent.getHostColor() = " + game.gameContent.getHostColor());
-        if (game.gameContent.getHostColor() == Color.BLACK) {
-            binding.textBlackPlayerName.setText(PrettyFormat.playerName(game.hostPlayer));
-            binding.textWhitePlayerName.setText(PrettyFormat.playerName(game.getGuestPlayer()));
+        Participant me = game.gameContent.getThisParticipant(getPlayer());
+        Participant other = game.gameContent.getOtherParticipant(getPlayer());
+        if (me.color == Color.BLACK) {
+            binding.textBlackPlayerName.setText(PrettyFormat.playerName(me));
+            binding.textWhitePlayerName.setText(PrettyFormat.playerName(other));
         }
-        if (game.gameContent.getHostColor() == Color.WHITE) {
-            binding.textWhitePlayerName.setText(PrettyFormat.playerName(game.hostPlayer));
-            binding.textBlackPlayerName.setText(PrettyFormat.playerName(game.getGuestPlayer()));
+        if (me.color == Color.WHITE) {
+            binding.textWhitePlayerName.setText(PrettyFormat.playerName(me));
+            binding.textBlackPlayerName.setText(PrettyFormat.playerName(other));
         }
-        Log.d(LOG_TAG, "game.gameContent.getCurrentPlayer() = " + game.gameContent.getCurrentPlayer());
-        binding.textCurrentPlayerName.setText(PrettyFormat.playerName(game.gameContent.getCurrentPlayer()));
+        if(game.gameContent.isStarted()){
+            binding.textCurrentPlayerName.setText(PrettyFormat.playerName(game.gameContent.getCurrentParticipant()));
+        }
     }
 
     @Override

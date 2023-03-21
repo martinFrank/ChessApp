@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".SettingsFragment"
+        android:orientation="vertical">
+
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <TextView
+                android:text="@string/player_name"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:gravity="center" />
+
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:text="Name"
+                android:ems="10"
+                android:id="@+id/editTextPlayerName" />
+    </LinearLayout>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <TextView
+                android:text="@string/player_id"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:gravity="center" />
+
+        <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"
+                android:text="Name"
+                android:ems="10"
+                android:id="@+id/editTextPlayerId" />
+    </LinearLayout>
+
+    <TextView
+            android:text=" "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    <TextView
+            android:text=" "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <TextView
+                android:text="@string/player_color_red"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:gravity="center" />
+
+        <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/seekBarRed"
+                android:layout_weight="2"/>
+
+    </LinearLayout>
+    <TextView
+            android:text=" "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <TextView
+                android:text="@string/player_color_green"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:gravity="center" />
+
+        <SeekBar
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/seekBarGreen" />
+
+    </LinearLayout>
+    <TextView
+            android:text=" "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <TextView
+                android:text="@string/player_color_blue"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:gravity="center" />
+
+        <SeekBar
+                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:id="@+id/seekBarBlue" />
+
+    </LinearLayout>
+    <TextView
+            android:text=" "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        <TextView
+                android:text="@string/player_color_result"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:gravity="center" />
+
+        <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="20pt"
+                android:id="@+id/button_result_color" />
+
+    </LinearLayout>
+
+
+    <TextView
+            android:text=" "
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom">
+
+        <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"/>
+
+        <Button
+                android:id="@+id/button_back"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/accept_settings"
+                android:layout_weight="3"/>
+
+        <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"/>
+
+    </LinearLayout>
+</LinearLayout>

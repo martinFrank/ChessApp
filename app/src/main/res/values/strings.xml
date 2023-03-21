@@ -12,13 +12,35 @@
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="create_game">create game</string>
+    <string name="change_settings">Settings</string>
     <string name="refresh_game_list">refresh</string>
     <string name="list_servers">list of games</string>
     <string name="black_player_name">BLACK: </string>
     <string name="white_player_name">WHITE: </string>
     <string name="current_player_name">current: </string>
+    <string name="player_name">player name: </string>
+    <string name="player_id">player id: </string>
+    <string name="player_color_red">red: </string>
+    <string name="player_color_green">green: </string>
+    <string name="player_color_blue">blue: </string>
+    <string name="player_color_result">result: </string>
+    <string name="accept_settings">accept</string>
     <string name="join_game">join</string>
     <string name="delete_game">delete</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails</string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
 </resources>

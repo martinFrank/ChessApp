@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.github.martinfrank.chessapp.databinding.FragmentStartBinding;
 import com.github.martinfrank.games.chessmodel.message.Message;
+import com.github.martinfrank.games.chessmodel.message.deletegame.FcDeleteGameMessage;
 import com.github.martinfrank.games.chessmodel.message.getopengames.FcGetOpenGamesMessage;
 import com.github.martinfrank.games.chessmodel.message.getopengames.FsSubmitOpenGamesMessage;
 import com.github.martinfrank.games.chessmodel.model.Game;
@@ -51,6 +52,11 @@ public class StartFragment extends Fragment implements ChessMessageReceiver {
         });
 
         binding.buttonRefresh.setOnClickListener(view1 -> updateServerList());
+
+        binding.buttonSettings.setOnClickListener(button ->
+            NavHostFragment.findNavController(StartFragment.this)
+                    .navigate(R.id.action_StartFragment_to_SettingsFragment)
+        );
 
         RecyclerView chessServerView = binding.chessServers;
 
@@ -135,7 +141,9 @@ public class StartFragment extends Fragment implements ChessMessageReceiver {
     }
 
 
-    public void deleteGame(Game chessGame) {
-        //TODO
+    public void deleteGame(Game game) {
+        Log.d(LOG_TAG, "deleting game");
+        FcDeleteGameMessage deleteGameMessage = new FcDeleteGameMessage(getPlayer(), game.gameId);
+        sendMessage(deleteGameMessage);
     }
 }
