@@ -12,7 +12,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import com.github.martinfrank.chessapp.databinding.FragmentSettingsBinding;
-import com.github.martinfrank.games.chessmodel.model.Player;
 
 import java.util.UUID;
 
@@ -43,6 +42,13 @@ public class SettingsFragment extends Fragment {
         );
 
         binding.editTextPlayerId.setEnabled(false);
+
+        binding.seekBarRed.setMax(0xff);
+        binding.seekBarRed.setMin(0);
+        binding.seekBarGreen.setMax(0xff);
+        binding.seekBarGreen.setMin(0);
+        binding.seekBarBlue.setMax(0xff);
+        binding.seekBarBlue.setMin(0);
 
         binding.seekBarRed.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -108,7 +114,7 @@ public class SettingsFragment extends Fragment {
             playerName = "Player";
         }
 
-        int color = caclucateArgb();
+        int color = calculateArgb();
         color = color & 0xFFFFFF;
 
         editor.putString(MainActivity.SHARED_PREF_PLAYER_NAME, playerName);
@@ -117,19 +123,14 @@ public class SettingsFragment extends Fragment {
     }
 
     private void updateResult() {
-        int rgb = caclucateArgb();
-        Log.d(LOG_TAG, "argb: " + Integer.toHexString(rgb));
-        binding.buttonResultColor.setBackgroundColor(rgb);
+        int argb = calculateArgb();
+        Log.d(LOG_TAG, "argb: " + Integer.toHexString(argb));
+        binding.buttonResultColor.setBackgroundColor(argb);
     }
 
-    private int caclucateArgb() {
-        int r = (colorRed << 16);
-        int g = (colorGreen << 8);
-        int b = colorBlue;
-        Log.d(LOG_TAG, "r: " + Integer.toHexString(r));
-        Log.d(LOG_TAG, "g: " + Integer.toHexString(g));
-        Log.d(LOG_TAG, "b: " + Integer.toHexString(b));
-        return r + g + b + 0xFF000000;
+    private int calculateArgb() {
+        int rgb = ColorConverter.rgb(colorRed, colorGreen, colorBlue);
+        return rgb + 0xFF000000;
     }
 
     private void loadFromPreferences() {
@@ -137,22 +138,12 @@ public class SettingsFragment extends Fragment {
         binding.editTextPlayerName.setText(sharedPref.getString(MainActivity.SHARED_PREF_PLAYER_NAME, "Player"));
         binding.editTextPlayerId.setText(sharedPref.getString(MainActivity.SHARED_PREF_PLAYER_ID, UUID.randomUUID().toString()));
         int color = sharedPref.getInt(MainActivity.SHARED_PREF_PLAYER_COLOR, 0xFF00FF);
-        colorRed = (0xFF0000 & color) >> 16;
-        colorGreen = (0x00FF00 & color) >> 8;
-        colorBlue = (0x0000FF & color);
-        Log.d(LOG_TAG, "color: " + Integer.toHexString(color));
-        Log.d(LOG_TAG, "colorRed: " + Integer.toHexString(colorRed));
-        Log.d(LOG_TAG, "colorGreen: " + Integer.toHexString(colorGreen));
-        Log.d(LOG_TAG, "colorBlue: " + Integer.toHexString(colorBlue));
+        colorRed = ColorConverter.red(color);
+        colorGreen = ColorConverter.green(color);
+        colorBlue = ColorConverter.blue(color);
         binding.seekBarRed.setProgress(colorRed);
-        binding.seekBarRed.setMax(0xff);
-        binding.seekBarRed.setMin(0);
         binding.seekBarGreen.setProgress(colorGreen);
-        binding.seekBarGreen.setMax(0xff);
-        binding.seekBarGreen.setMin(0);
         binding.seekBarBlue.setProgress(colorBlue);
-        binding.seekBarBlue.setMax(0xff);
-        binding.seekBarBlue.setMin(0);
     }
 
 }

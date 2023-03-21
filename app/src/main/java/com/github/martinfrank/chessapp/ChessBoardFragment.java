@@ -94,6 +94,9 @@ public class ChessBoardFragment extends Fragment implements ChessMessageReceiver
     }
 
     private void selectField(Field f) {
+        if (f == null){
+            return;
+        }
         boolean isValidMove = game.gameContent.isValidMove(previousSelection, f, getPlayer());
         boolean hasSelection = game.gameContent.getThisParticipant(getPlayer()).hasSelection();
         if (isValidMove && hasSelection) {
