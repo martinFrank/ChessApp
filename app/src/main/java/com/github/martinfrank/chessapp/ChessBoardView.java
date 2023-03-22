@@ -15,6 +15,7 @@ import com.github.martinfrank.games.chessmodel.model.chess.Field;
 import com.github.martinfrank.games.chessmodel.model.chess.Figure;
 import com.github.martinfrank.games.chessmodel.model.chess.Participant;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +30,7 @@ public class ChessBoardView extends View {
     private final Paint whiteFigure = new Paint();
     private final Paint hostColor = new Paint();
     private final Paint guestColor = new Paint();
+    private final Paint coordinateColor = new Paint();
     private Game game;
 
     private static final float FIELD_DIVIDER = 9f;
@@ -67,6 +69,8 @@ public class ChessBoardView extends View {
 
         hostColor.setStyle(Paint.Style.STROKE);
         guestColor.setStyle(Paint.Style.STROKE);
+
+        coordinateColor.setARGB(0xff, 0, 0, 0);
     }
 
 
@@ -80,6 +84,46 @@ public class ChessBoardView extends View {
         setMeasuredDimension(viewSizeInPixels, viewSizeInPixels);
         blackFigure.setTextSize(viewSizeInPixels / FIELD_DIVIDER);
         whiteFigure.setTextSize(viewSizeInPixels / FIELD_DIVIDER);
+        coordinateColor.setTextSize(viewSizeInPixels / FIELD_DIVIDER / 3f);
+    }
+
+    public void updateBoard(Game game) {
+        this.game = game;
+        int hr = ColorConverter.red(game.getHostPlayer().color);
+        int hg = ColorConverter.green(game.getHostPlayer().color);
+        int hb = ColorConverter.blue(game.getHostPlayer().color);
+        hostColor.setARGB(0xff, hr, hg, hb);
+        hostColor.setStrokeWidth(STROKE_WIDTH);
+        if (game.getGuestPlayer() != null) {
+            int gr = ColorConverter.red(game.getGuestPlayer().color);
+            int gg = ColorConverter.green(game.getGuestPlayer().color);
+            int gb = ColorConverter.blue(game.getGuestPlayer().color);
+            guestColor.setARGB(0xff, gr, gg, gb);
+            guestColor.setStrokeWidth(STROKE_WIDTH);
+        }
+
+    }
+
+
+    public Field getFieldAt(float x, float y) {
+        float rasterSize = viewSizeInPixels / FIELD_DIVIDER;
+        float padding = rasterSize / 2;
+        if (x - padding < 0) {
+            return null;
+        }
+        if (y - padding < 0) {
+            return null;
+        }
+        int xInt = (int) ((x - padding) / rasterSize);
+        int yInt = (int) ((y - padding) / rasterSize);
+        Log.d(LOG_TAG, "mapping touch: " + x + "/" + y + " to field at: " + xInt + "/" + yInt);
+        try {
+            String column = Field.mapToColumn(xInt);
+            String row = Field.mapToRow(yInt);
+            return new Field(row, column);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     @Override
@@ -87,6 +131,27 @@ public class ChessBoardView extends View {
         super.onDraw(canvas);
         float squareSize = viewSizeInPixels / FIELD_DIVIDER;
         drawFields(canvas, squareSize);
+        drawCoordinates(canvas, squareSize);
+    }
+
+    private void drawCoordinates(Canvas canvas, float squareSize) {
+        float offset = squareSize / 2f;
+        for (int dx = 0; dx < 8; dx++) {
+            String column = Field.mapToColumn(dx);
+            float x = (dx * squareSize) + offset + coordinateColor.getTextSize();
+            float top = coordinateColor.getTextSize() + 2f;
+            float bottom = (8 * squareSize) + offset + coordinateColor.getTextSize() + 2f;
+            canvas.drawText(column, x, top, coordinateColor);
+            canvas.drawText(column, x, bottom, coordinateColor);
+        }
+        for (int dy = 0; dy < 8; dy++) {
+            String row = Field.mapToRow(dy);
+            float left = (squareSize / 4f) - 2f;
+            float right = (8 * squareSize) + offset + (squareSize / 8f);
+            float y = (dy * squareSize) + offset + (squareSize / 4f) + coordinateColor.getTextSize();
+            canvas.drawText(row, left, y, coordinateColor);
+            canvas.drawText(row, right, y, coordinateColor);
+        }
     }
 
     private void drawFields(Canvas canvas, float squareSize) {
@@ -101,57 +166,57 @@ public class ChessBoardView extends View {
     }
 
     private void drawSelection(Canvas canvas, float squareSize) {
-        float padding = squareSize / 2f;
-        Field hostSelection = getSelection(game.gameContent.getHost());
-        Field guestSelection = getSelection(game.gameContent.getGuest());
 
-        if (guestSelection != null && guestSelection.equals(hostSelection)) {
-            hostColor.setPathEffect(new DashPathEffect(new float[]{10, 10}, 0));
-            guestColor.setPathEffect(new DashPathEffect(new float[]{10, 10}, 10));
-        } else {
-            hostColor.setPathEffect(null);
-            guestColor.setPathEffect(null);
+        List<Field> hostSelection = getSelection(game.chessGame.getHost());
+        List<Field> guestSelection = getSelection(game.chessGame.getGuest());
+        List<Field> intersection = intersect(hostSelection, guestSelection);
+        for (Field selectionPath : hostSelection) {
+            Rect fRect = mapToRect(Field.mapFromColumn(selectionPath.column), Field.mapFromRow(selectionPath.row), squareSize);
+            canvas.drawRect(fRect, hostColor);
         }
-        if (hostSelection != null) {
-            List<Field> fields = game.gameContent.board.getSelectionForField(hostSelection);
-            fields.add(hostSelection);
-            for (Field selectionPath : fields) {
-                int x0 = (int) ((Field.mapFromColumn(selectionPath.column) * squareSize)+padding);
-                int y0 = (int) ((Field.mapFromRow(selectionPath.row) * squareSize)+padding);
-                int x1 = (int) (((Field.mapFromColumn(selectionPath.column) + 1) * squareSize)+padding);
-                int y1 = (int) (((Field.mapFromRow(selectionPath.row) + 1) * squareSize)+padding);
-                Rect field = new Rect(x0, y0, x1, y1);
-                canvas.drawRect(field, hostColor);
-            }
+        for (Field selectionPath : guestSelection) {
+            Rect fRect = mapToRect(Field.mapFromColumn(selectionPath.column), Field.mapFromRow(selectionPath.row), squareSize);
+            canvas.drawRect(fRect, guestColor);
         }
-        if (guestSelection != null) {
-            List<Field> fields = game.gameContent.board.getSelectionForField(guestSelection);
-            fields.add(guestSelection);
-            for (Field selectionPath : fields) {
-                int x0 = (int) ((Field.mapFromColumn(selectionPath.column) * squareSize)+padding);
-                int y0 = (int) ((Field.mapFromRow(selectionPath.row) * squareSize)+padding);
-                int x1 = (int) (((Field.mapFromColumn(selectionPath.column) + 1) * squareSize)+padding);
-                int y1 = (int) (((Field.mapFromRow(selectionPath.row) + 1) * squareSize)+padding);
-                Rect field = new Rect(x0, y0, x1, y1);
-                canvas.drawRect(field, guestColor);
-            }
+        hostColor.setPathEffect(new DashPathEffect(new float[]{10, 10}, 0));
+        guestColor.setPathEffect(new DashPathEffect(new float[]{10, 10}, 10));
+        for (Field selectionPath : intersection) {
+            Rect fRect = mapToRect(Field.mapFromColumn(selectionPath.column), Field.mapFromRow(selectionPath.row), squareSize);
+            canvas.drawRect(fRect, hostColor);
+            canvas.drawRect(fRect, guestColor);
         }
-
+        hostColor.setPathEffect(null);
+        guestColor.setPathEffect(null);
     }
 
-    private Field getSelection(Participant p) {
-        return p == null ? null : p.getSelection();
+    private List<Field> intersect(List<Field> hostSelection, List<Field> guestSelection) {
+        List<Field> result = new ArrayList<>();
+        for (Field f : hostSelection) {
+            if (guestSelection.contains(f)) {
+                result.add(f);
+            }
+        }
+        hostSelection.removeAll(result);
+        guestSelection.removeAll(result);
+        return result;
+    }
+
+
+    private List<Field> getSelection(Participant p) {
+        List<Field> result = new ArrayList<>();
+        if (p != null && p.getSelection() != null) {
+            Field start = p.getSelection();
+            result.add(start);
+            List<Field> fields = game.chessGame.board.getSelectionForField(start);
+            result.addAll(fields);
+        }
+        return result;
     }
 
     private void drawField(int dx, int dy, float squareSize, Canvas canvas) {
         Paint color = (dx + dy) % 2 == 0 ? blackBack : whiteBack;
-        float padding = squareSize / 2f;
-        int x0 = (int) (dx * squareSize + padding);
-        int y0 = (int) (dy * squareSize + padding);
-        int x1 = (int) ((dx + 1) * squareSize + padding);
-        int y1 = (int) ((dy + 1) * squareSize + padding);
-        Rect field = new Rect(x0, y0, x1, y1);
-        canvas.drawRect(field, color);
+        Rect fRect = mapToRect(dx, dy, squareSize);
+        canvas.drawRect(fRect, color);
         drawFigure(dx, dy, squareSize, canvas);
     }
 
@@ -169,14 +234,14 @@ public class ChessBoardView extends View {
     }
 
     private boolean hasBoard() {
-        return game != null && game.gameContent != null && game.gameContent.board != null;
+        return game != null && game.chessGame != null && game.chessGame.board != null;
     }
 
     private Figure findFigureAt(int dx, int dy) {
         String column = Field.mapToColumn(dx);
         String row = Field.mapToRow(dy);
 
-        for (Map.Entry<Field, Figure> entry : game.gameContent.board.lineUp.entrySet()) { //NPE already checked
+        for (Map.Entry<Field, Figure> entry : game.chessGame.board.lineUp.entrySet()) { //NPE already checked
             Field field = entry.getKey();
             if (field.row.equals(row) && field.column.equals(column)) {
                 return entry.getValue();
@@ -186,42 +251,12 @@ public class ChessBoardView extends View {
     }
 
 
-    public void updateBoard(Game game) {
-        this.game = game;
-        int hr = ColorConverter.red(game.hostPlayer.color);
-        int hg = ColorConverter.green(game.hostPlayer.color);
-        int hb = ColorConverter.blue(game.hostPlayer.color);
-        hostColor.setARGB(0xff, hr, hg, hb);
-        hostColor.setStrokeWidth(STROKE_WIDTH);
-        if (game.getGuestPlayer() != null) {
-            int gr = ColorConverter.red(game.getGuestPlayer().color);
-            int gg = ColorConverter.green(game.getGuestPlayer().color);
-            int gb = ColorConverter.blue(game.getGuestPlayer().color);
-            guestColor.setARGB(0xff, gr, gg, gb);
-            guestColor.setStrokeWidth(STROKE_WIDTH);
-        }
-
-    }
-
-
-    public Field getFieldAt(float x, float y) {
-        float rasterSize = viewSizeInPixels / FIELD_DIVIDER;
-        float padding = rasterSize / 2;
-        if(x - padding < 0){
-            return null;
-        }
-        if(y - padding < 0){
-            return null;
-        }
-        int xInt = (int) ((x - padding) / rasterSize);
-        int yInt = (int) ((y - padding) / rasterSize);
-        Log.d(LOG_TAG, "mapping touch: " + x + "/" + y + " to field at: " + xInt + "/" + yInt);
-        try {
-            String column = Field.mapToColumn(xInt);
-            String row = Field.mapToRow(yInt);
-            return new Field(row, column);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+    private Rect mapToRect(int column, int row, float squareSize) {
+        float padding = squareSize / 2f;
+        int x0 = (int) (column * squareSize + padding);
+        int y0 = (int) (row * squareSize + padding);
+        int x1 = (int) ((column + 1) * squareSize + padding);
+        int y1 = (int) ((row + 1) * squareSize + padding);
+        return new Rect(x0, y0, x1, y1);
     }
 }

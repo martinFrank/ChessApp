@@ -47,7 +47,7 @@ public class ChessServerAdapter extends RecyclerView.Adapter<ChessServerAdapter.
         // Set item views based on your views and data model
         TextView textView = holder.gameNameTextView;
         textView.setText("     " + PrettyFormat.prettyGame(game));
-        boolean isMine = player != null && player.equals(game.hostPlayer);
+        boolean isMine = player != null && player.equals(game.getHostPlayer());
         holder.deleteGameButton.setEnabled(isMine);
         holder.isMineCheckBox.setChecked(isMine);
         boolean isPart = player != null && player.equals(game.getGuestPlayer());
